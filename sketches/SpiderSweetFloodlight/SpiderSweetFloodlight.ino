@@ -2,12 +2,14 @@
 #include <vector>
 #include <Floodlight.h>
 
-// #define MINIME
-// #define REPEATER
+// Test for sending floodlight commands to remove server
+#define SERIAL 0
+// Or test locally on Server and execute commands
+#define SERVER_CLIENT 1
 
 // Floodlight control
 #define NUM_COMMANDS 24
-#define START_COMMAND 1
+#define START_COMMAND 0
 #define END_COMMAND NUM_COMMANDS
 
 // delay
@@ -16,21 +18,22 @@
 
 // Control how many floodlights to test
 #define NUM_FLOODLIGHTS 6
-#define START_FLOODLIGHT 1
+#define START_FLOODLIGHT 0 // 0-5 indices
 #define END_FLOODLIGHT NUM_FLOODLIGHTS
 
 // Control order of floodlights here
 // Change pin to the heart floodlight 
-#define HEARTLIGHT_PIN 2
+#define HEARTLIGHT_PIN 5
 #define FLOODLIGHT_PIN1 HEARTLIGHT_PIN
-#define FLOODLIGHT_PIN2 14
-#define FLOODLIGHT_PIN3 7
-#define FLOODLIGHT_PIN4 8
-#define FLOODLIGHT_PIN5 6
-#define FLOODLIGHT_PIN6 20
-#define FLOODLIGHT_PIN7 21
-#define FLOODLIGHT_PIN8 5
+#define FLOODLIGHT_PIN2 20
+#define FLOODLIGHT_PIN3 21
+#define FLOODLIGHT_PIN4 2
+#define FLOODLIGHT_PIN5 14
+#define FLOODLIGHT_PIN6 8
+#define FLOODLIGHT_PIN7 7
+#define FLOODLIGHT_PIN8 6
 
+#define TEENSY_LED 13
 
 struct Floodlight;
 struct FloodlightCommand;
@@ -41,40 +44,71 @@ FloodlightCommand commandTable;
 
 std::vector<Floodlight> floodlights;
 
-// List of patterns to cycle through.  Each is defined as a separate function below.
-typedef void (*SimplePatternList[])(CRGB *leds, int numLeds);
-// SimplePatternList gPatterns = { Disco, Rainbow, RainbowWithGlitter, Confetti, Sinelon, Juggle, Bpm, Fire };
 
-uint8_t gCommand = 0; // Index for current floodlight command
-uint8_t gPalette = 0; // Index number for current palette
-uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
-uint8_t gHue = 0; // rotating "base color" used by many of the patterns
 bool gHeart = false;
+bool gShowFloodlights = true;
 //
 void setup()
 {
 	pinMode(PIN_A13, OUTPUT);
 	digitalWrite(PIN_A13, LOW);
+    //
+    pinMode(TEENSY_LED, OUTPUT);
+    // Open serial communications and wait for port to open:
+    Serial5.begin(38400);
     // flooodlights
     floodlights = {
-        { FLOODLIGHT_PIN1, commandTable.FLCommand[1] },
-        { FLOODLIGHT_PIN2, commandTable.FLCommand[1] },
-        { FLOODLIGHT_PIN3, commandTable.FLCommand[1] },
-        { FLOODLIGHT_PIN4, commandTable.FLCommand[1] },
-        { FLOODLIGHT_PIN5, commandTable.FLCommand[1] },
-        { FLOODLIGHT_PIN6, commandTable.FLCommand[1] }
+        { FLOODLIGHT_PIN1, commandTable.FLCommand[0] },
+        { FLOODLIGHT_PIN2, commandTable.FLCommand[0] },
+        { FLOODLIGHT_PIN3, commandTable.FLCommand[0] },
+        { FLOODLIGHT_PIN4, commandTable.FLCommand[0] },
+        { FLOODLIGHT_PIN5, commandTable.FLCommand[0] },
+        { FLOODLIGHT_PIN6, commandTable.FLCommand[0] }
     };
 
 
     for (int i=0; i<NUM_FLOODLIGHTS; i++) {
-        floodlights[i].writeCommand(); // power on
+        floodlights[i].writeCommand(); // power off
     }
 }
 
 void loop()
 {
+    int byte;
+
+    uint8_t cmdTableIndex, cmdPin;
 
     for (uint8_t effect = START_COMMAND; effect < END_COMMAND; effect++) {
+        if (SERVER_CLIENT ) {
+            // Testing Floodlight Server
+            while (Serial5.available()) {
+                byte = Serial5.read();
+                cmdTableIndex |= cmd & 0x1F;
+                cmdPin |= (cmd >> 5) & 0x03;
+                if ((cmdTableIndex < 32) && (cmdPin < 8)) {
+                    floodlights[cmdPin].currentCommand = commandTable.FLCommand[cmdTableIndex];
+                    floodlights[cmdPin].writeCommand();
+                }
+                Blink();
+                delay(10000);
+            }
+        }
+
+        if (SERIAL) {
+            // Testing Floodlight Server
+            while (Serial5.available()) {
+                byte = Serial5.read();
+
+            }
+            // Testing Floodlight Client
+            if (Serial5.availableForWrite()) {
+                byte = 5;
+                
+                Serial5.write(byte);
+                Blink();
+            }
+        }
+
         EVERY_N_SECONDS( 30 ) {
             if (gHeart) {
                 Heartrest(&floodlights[0]);
@@ -83,13 +117,28 @@ void loop()
                 Heartbeat(&floodlights[0]);
                 gHeart = true;
             }
+            gShowFloodlights = true;
         }
         for (int floodlight=START_FLOODLIGHT; floodlight<END_FLOODLIGHT; floodlight++) {
             floodlights[floodlight].currentCommand = commandTable.FLCommand[effect];
-            floodlights[floodlight].writeCommand();
+            if (LOCAL) {
+                floodlights[floodlight].writeCommand();
+            } else if (SERVER_CLIENT) {
+                SendFloodlightCommand(&floodlights[floodlight]);
+            }
             delay(DELAY_INBETWEEN_FLOODLIGHTS);
         }
         delay(DELAY_INBETWEEN_COMMANDS);
+    }
+}
+
+void SendFloodlightCommand(Floodlight *floodlight) {
+    int byte;
+    if (Serial5.availableForWrite()) {
+        byte |= (5 << floodlight->pin) & 0xE0;
+        byte |= floodlight->currentCommand & 0x1F;
+        Serial5.write(byte);
+        Blink();
     }
 }
 void TestFloodlights(Floodlight *floodlights, int numFloodlights, uint32_t command) {
@@ -118,3 +167,9 @@ void Heartrest(Floodlight *floodlight) {
     floodlight->writeCommand(); // strobe
 }
 
+void Blink() {
+    digitalWrite(TEENSY_LED, HIGH);
+    delay(1000);
+    digitalWrite(TEENSY_LED, LOW);
+    delay(1000);
+}
