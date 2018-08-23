@@ -1,4 +1,4 @@
-#include <FastLED.h>
+#include "FastLED.h"
 #include <LedStrip.h>
 
 #define CHIPSET WS2811
@@ -97,7 +97,9 @@
 #define SPARKING 120
 #define PHASESHIFT 10
 #define CYCLETIME 2500
-#define GLITTER_CHANCE 80
+#define HUE 0
+#define GLITTER 80
+#define COLOR_INDEX 0
 #define UPDATES_PER_SECOND 100
 
 
@@ -138,20 +140,22 @@ CRGB leds6[STRIP_SIX_LEDS];
 CRGB leds7[STRIP_SEVEN_LEDS];
 CRGB leds8[STRIP_EIGHT_LEDS];
 
+CLEDController *controllers[NUM_STRIPS];
+
 // Pin layouts on the teensy 3/3.1:
 // WS2811_PORTD: 2,14,7,8,6,20,21,5
 // WS2811_    J: 4, 1,7,6,8, 2, 3,5
 // strip  order: 3, 5,8,2,1, 4, 6,7
 
 LedStrip ledStrips[] = {
-    { (leds4),STRIP_FOUR_PIN,STRIP_FOUR_LEDS,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
-    { (leds1),STRIP_ONE_PIN,STRIP_ONE_LEDS,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
-    { (leds7),STRIP_SEVEN_PIN,STRIP_SEVEN_LEDS,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
-    { (leds6),STRIP_SIX_PIN,STRIP_SIX_LEDS,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
-    { (leds8),STRIP_EIGHT_PIN,STRIP_EIGHT_LEDS,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
-    { (leds2),STRIP_TWO_PIN,STRIP_TWO_LEDS,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
-    { (leds3),STRIP_THREE_PIN,STRIP_THREE_LEDS,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
-    { (leds5),STRIP_FIVE_PIN,STRIP_FIVE_LEDS,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME}
+    { (leds4),STRIP_FOUR_PIN,STRIP_FOUR_LEDS,BRIGHTNESS,HUE,GLITTER,COLOR_INDEX,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
+    { (leds1),STRIP_ONE_PIN,STRIP_ONE_LEDS,BRIGHTNESS,HUE,GLITTER,COLOR_INDEX,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
+    { (leds7),STRIP_SEVEN_PIN,STRIP_SEVEN_LEDS,BRIGHTNESS,HUE,GLITTER,COLOR_INDEX,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
+    { (leds6),STRIP_SIX_PIN,STRIP_SIX_LEDS,BRIGHTNESS,HUE,GLITTER,COLOR_INDEX,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
+    { (leds8),STRIP_EIGHT_PIN,STRIP_EIGHT_LEDS,BRIGHTNESS,HUE,GLITTER,COLOR_INDEX,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
+    { (leds2),STRIP_TWO_PIN,STRIP_TWO_LEDS,BRIGHTNESS,HUE,GLITTER,COLOR_INDEX,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
+    { (leds3),STRIP_THREE_PIN,STRIP_THREE_LEDS,BRIGHTNESS,HUE,GLITTER,COLOR_INDEX,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME},
+    { (leds5),STRIP_FIVE_PIN,STRIP_FIVE_LEDS,BRIGHTNESS,HUE,GLITTER,COLOR_INDEX,false,COOLING,SPARKING,PHASESHIFT,CYCLETIME}
 };
 
 // DemoReel100
@@ -167,14 +171,14 @@ void setup()
 	pinMode(PIN_A13, OUTPUT);
 	digitalWrite(PIN_A13, LOW);
 	// LEDS.addLeds<WS2811_PORTD,NUM_STRIPS>(leds, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
-    FastLED.addLeds<CHIPSET, STRIP_THREE_PIN, COLOR_ORDER>(ledStrips[2].leds, STRIP_THREE_LEDS).setCorrection( TypicalLEDStrip );
-    FastLED.addLeds<CHIPSET, STRIP_FIVE_PIN, COLOR_ORDER>(ledStrips[4].leds, STRIP_FIVE_LEDS).setCorrection( TypicalLEDStrip );
-    FastLED.addLeds<CHIPSET, STRIP_EIGHT_PIN, COLOR_ORDER>(ledStrips[7].leds, STRIP_EIGHT_LEDS).setCorrection( TypicalLEDStrip );
-    FastLED.addLeds<CHIPSET, STRIP_TWO_PIN, COLOR_ORDER>(ledStrips[1].leds, STRIP_TWO_LEDS).setCorrection( TypicalLEDStrip );
-    FastLED.addLeds<CHIPSET, STRIP_ONE_PIN, COLOR_ORDER>(ledStrips[0].leds, STRIP_ONE_LEDS).setCorrection( TypicalLEDStrip );
-    FastLED.addLeds<CHIPSET, STRIP_FOUR_PIN, COLOR_ORDER>(ledStrips[3].leds, STRIP_FOUR_LEDS).setCorrection( TypicalLEDStrip );
-    FastLED.addLeds<CHIPSET, STRIP_SIX_PIN, COLOR_ORDER>(ledStrips[5].leds, STRIP_SIX_LEDS).setCorrection( TypicalLEDStrip );
-    FastLED.addLeds<CHIPSET, STRIP_SEVEN_PIN, COLOR_ORDER>(ledStrips[6].leds, STRIP_SEVEN_LEDS).setCorrection( TypicalLEDStrip );
+    controllers[0] = &FastLED.addLeds<CHIPSET, STRIP_THREE_PIN, COLOR_ORDER>(ledStrips[2].leds, STRIP_THREE_LEDS).setCorrection( TypicalLEDStrip );
+    controllers[1] = &FastLED.addLeds<CHIPSET, STRIP_FIVE_PIN, COLOR_ORDER>(ledStrips[4].leds, STRIP_FIVE_LEDS).setCorrection( TypicalLEDStrip );
+    controllers[2] = &FastLED.addLeds<CHIPSET, STRIP_EIGHT_PIN, COLOR_ORDER>(ledStrips[7].leds, STRIP_EIGHT_LEDS).setCorrection( TypicalLEDStrip );
+    controllers[3] = &FastLED.addLeds<CHIPSET, STRIP_TWO_PIN, COLOR_ORDER>(ledStrips[1].leds, STRIP_TWO_LEDS).setCorrection( TypicalLEDStrip );
+    controllers[4] = &FastLED.addLeds<CHIPSET, STRIP_ONE_PIN, COLOR_ORDER>(ledStrips[0].leds, STRIP_ONE_LEDS).setCorrection( TypicalLEDStrip );
+    controllers[5] = &FastLED.addLeds<CHIPSET, STRIP_FOUR_PIN, COLOR_ORDER>(ledStrips[3].leds, STRIP_FOUR_LEDS).setCorrection( TypicalLEDStrip );
+    controllers[6] = &FastLED.addLeds<CHIPSET, STRIP_SIX_PIN, COLOR_ORDER>(ledStrips[5].leds, STRIP_SIX_LEDS).setCorrection( TypicalLEDStrip );
+    controllers[7] = &FastLED.addLeds<CHIPSET, STRIP_SEVEN_PIN, COLOR_ORDER>(ledStrips[6].leds, STRIP_SEVEN_LEDS).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness( BRIGHTNESS );
 
     currentPalette = RainbowColors_p;
@@ -197,17 +201,23 @@ void loop()
                 else if (i == 5) {gPatterns[gCurrentPatternNumber](&ledStrips[i]);}
                 else if (i == 6) {gPatterns[gCurrentPatternNumber](&ledStrips[i]);}
                 else if (i == 7) {gPatterns[gCurrentPatternNumber](&ledStrips[i]);}
+                // fill_solid(ledStrips[i].leds, ledStrips[i].numLeds, CRGB::MintCream);
+                // controllers[i]->showLeds(ledStrips[i].brightness);
             }
-            LEDS.show();
-            // LEDS.delay(10);
-            LEDS.delay(1000 / UPDATES_PER_SECOND);
+            FastLED.show();
+            // FastLED.delay(10);
+            FastLED.delay(1000 / UPDATES_PER_SECOND);
             // do some periodic updates
-            EVERY_N_MILLISECONDS( 20 ) { gHue++; } // slowly cycle the "base color" through the rainbow
-            EVERY_N_SECONDS( 30 ) { NextPattern(); } // change patterns periodically
+            EVERY_N_MILLISECONDS( 20 ) { 
+                for (int i = 0; i < NUM_STRIPS; i++) {
+                    ledStrips[i].hue++;
+                } // slowly cycle the "base color" through the rainbow
+            }
+            EVERY_N_SECONDS( 10 ) { NextPattern(); } // change patterns periodically
         } else {
             // ColorPalette
             // ChangePalettePeriodically(gPalette);
-            EVERY_N_SECONDS( 30 ) { ChangePalettePeriodically(gPalette); } // change patterns periodically
+            EVERY_N_SECONDS( 10 ) { ChangePalettePeriodically(gPalette); } // change patterns periodically
 
             static uint8_t startIndex = 0;
             startIndex = startIndex + 1; /* motion speed */
@@ -215,13 +225,13 @@ void loop()
             // FillLEDsFromPaletteColors( startIndex);
             static uint8_t hue = 0;
             for (int i = 0; i < NUM_STRIPS; i++) {
-                FillLEDsFromPaletteColors(ledStrips[i].leds, ledStrips[i].numLeds, startIndex);
+                FillLEDsFromPaletteColors(&ledStrips[i], startIndex);
             }
             hue++;
             gPalette++;
-            LEDS.show();
-            // LEDS.delay(10);
-            LEDS.delay(1000 / UPDATES_PER_SECOND);
+            FastLED.show();
+            // FastLED.delay(10);
+            FastLED.delay(1000 / UPDATES_PER_SECOND);
         }
     }
 
@@ -234,12 +244,12 @@ void NextPattern()
   gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns);
 }
 
-void FillLEDsFromPaletteColors(CRGB *leds, int numLeds, uint8_t colorIndex)
+void FillLEDsFromPaletteColors(LedStrip *ledStrip, uint8_t colorIndex)
 {
-    uint8_t brightness = 255;
+    uint8_t brightness = ledStrip->brightness;
 
-    for( int j = 0; j < numLeds; j++) {
-        leds[j] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
+    for( int j = 0; j < ledStrip->numLeds; j++) {
+        ledStrip->leds[j] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
         colorIndex += 3;
     }
 }
@@ -337,68 +347,10 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
     CRGB::Black,
     CRGB::Black
 };
-/*
-
-void setRainbowColors() {
-    int hue,
-        saturation,
-        lightness,
-        i;
-    for (i=0; i<180; i++) {
-        hue = i * 2;
-        saturation = 100;
-        lightness = 50;
-        // pre-compute the 180 rainbow colors
-        rainbowColors[i] = makeColor(hue, saturation, lightness);
-    }
-
-}
-// phaseShift is the shift between each row.  phaseShift=0
-// causes all rows to show the same colors moving together.
-// phaseShift=180 causes each row to be the opposite colors
-// as the previous.
-//
-// cycleTime is the number of milliseconds to shift through
-// the entire 360 degrees of the color wheel:
-// Red -> Orange -> Yellow -> Green -> Blue -> Violet -> Red
-//
-void rainbow(CRGB *leds, int numLeds, int numStrips, int phaseShift, int cycleTime)
-{
-  int color, x, y, wait;
-
-  wait = cycleTime * 1000 / numLeds;
-  for (color=0; color < 180; color++) {
-    digitalWrite(1, HIGH);
-    for (x=0; x < numLeds; x++) {
-      for (y=0; y < numStrips; y++) {
-        int index = (color + x + y*phaseShift/2) % 180;
-        leds[x] = rainbowColors[index];
-      }
-    }
-    // delayMicroseconds(wait);
-  }
-}
-
-// DemoReel100
-#define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
-
-void NextPattern()
-{
-  // add one to the current pattern number, and wrap around at the end
-  gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns);
-}
-
-void Rainbow(CRGB *leds, int numLeds)
-{
-  // FastLED's built-in rainbow generator
-  fill_rainbow( leds, numLeds, gHue, 7);
-}
-
-*/
 
 void Rainbow(LedStrip *ledStrip) {
     // FastLED's built-in rainbow generator
-    fill_rainbow(ledStrip->leds, ledStrip->numLeds, gHue, 7);
+    fill_rainbow(ledStrip->leds, ledStrip->numLeds, ledStrip->hue, 7);
 }
 
 void RainbowWithGlitter(LedStrip *ledStrip) {
@@ -408,7 +360,7 @@ void RainbowWithGlitter(LedStrip *ledStrip) {
 }
 
 void AddGlitter(LedStrip *ledStrip) {
-    if( random8() < GLITTER_CHANCE)
+    if( random8() < GLITTER)
         ledStrip->leds[ random16(ledStrip->numLeds) ] += CRGB::White;
 }
 
@@ -416,14 +368,14 @@ void Confetti(LedStrip *ledStrip) {
     // random colored speckles that blink in and fade smoothly
     fadeToBlackBy( ledStrip->leds, ledStrip->numLeds, 10);
     int pos = random16(ledStrip->numLeds);
-    ledStrip->leds[pos] += CHSV( gHue + random8(64), 200, 255);
+    ledStrip->leds[pos] += CHSV( ledStrip->hue + random8(64), 200, 255);
 }
 
 void Sinelon(LedStrip *ledStrip) {
     // a colored dot sweeping back and forth, with fading trails
     fadeToBlackBy( ledStrip->leds, ledStrip->numLeds, 20);
     int pos = beatsin16( 13, 0, ledStrip->numLeds-1 );
-    ledStrip->leds[pos] += CHSV( gHue, 255, 192);
+    ledStrip->leds[pos] += CHSV( ledStrip->hue, 255, 192);
 }
 
 void Bpm(LedStrip *ledStrip) {
@@ -432,7 +384,7 @@ void Bpm(LedStrip *ledStrip) {
     CRGBPalette16 palette = PartyColors_p;
     uint8_t beat = beatsin8( BeatsPerMinute, 64, 255);
     for( int i = 0; i < ledStrip->numLeds; i++) //9948
-        ledStrip->leds[i] = ColorFromPalette(palette, gHue+(i&2), beat-gHue+(i&10));
+        ledStrip->leds[i] = ColorFromPalette(palette, ledStrip->hue+(i&2), beat-ledStrip->hue+(i&10));
 }
 
 void Juggle(LedStrip *ledStrip) {

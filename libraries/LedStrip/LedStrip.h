@@ -12,10 +12,10 @@ typedef struct LedStrip {
     int numLeds;
     // TODO int ledSegments[LEG_SEGMENTS];
     // int *legSegments;
-    // uint8_t brightness;
-    // uint8_t hue;
-    // uint8_t glitter;
-    // uint8_t colorIndex;;
+    uint8_t brightness;
+    uint8_t hue;
+    uint8_t glitter;
+    uint8_t colorIndex;;
     // Rainbow
     bool reverseDirection;
     int cooling;
