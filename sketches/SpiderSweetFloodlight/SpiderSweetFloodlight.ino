@@ -3,9 +3,9 @@
 #include <Floodlight.h>
 
 // Test for sending floodlight commands to remove server
-#define SERIAL 0
+#define LOCAL 1
 // Or test locally on Server and execute commands
-#define SERVER_CLIENT 1
+#define SERVER_CLIENT 0
 
 // Floodlight control
 #define NUM_COMMANDS 24
@@ -78,23 +78,12 @@ void loop()
 
     uint8_t cmdTableIndex, cmdPin;
 
+    /*
+     * Outer Loop to test each command
+     */
     for (uint8_t effect = START_COMMAND; effect < END_COMMAND; effect++) {
-        if (SERVER_CLIENT ) {
-            // Testing Floodlight Server
-            while (Serial5.available()) {
-                byte = Serial5.read();
-                cmdTableIndex |= cmd & 0x1F;
-                cmdPin |= (cmd >> 5) & 0x03;
-                if ((cmdTableIndex < 32) && (cmdPin < 8)) {
-                    floodlights[cmdPin].currentCommand = commandTable.FLCommand[cmdTableIndex];
-                    floodlights[cmdPin].writeCommand();
-                }
-                Blink();
-                delay(10000);
-            }
-        }
 
-        if (SERIAL) {
+        if (LOCAL) {
             // Testing Floodlight Server
             while (Serial5.available()) {
                 byte = Serial5.read();
@@ -109,6 +98,34 @@ void loop()
             }
         }
 
+        if (SERVER_CLIENT ) {
+            // Testing Floodlight Server
+            while (Serial5.available()) {
+                byte = Serial5.read();
+                cmdTableIndex |= byte & 0x1F;
+                cmdPin |= (byte >> 5) & 0x03;
+                if ((cmdTableIndex < 32) && (cmdPin < 8)) {
+                    floodlights[cmdPin].currentCommand = commandTable.FLCommand[cmdTableIndex];
+                    floodlights[cmdPin].writeCommand();
+                }
+                Blink();
+                delay(10000);
+            }
+        }
+        
+        /*
+         * Inner Loop to test each floodlight
+         */
+        for (int floodlight=START_FLOODLIGHT; floodlight<END_FLOODLIGHT; floodlight++) {
+            floodlights[floodlight].currentCommand = commandTable.FLCommand[effect];
+            if (LOCAL) {
+                floodlights[floodlight].writeCommand();
+            } else if (SERVER_CLIENT) {
+                SendFloodlightCommand(&floodlights[floodlight]);
+            }
+            delay(DELAY_INBETWEEN_FLOODLIGHTS);
+        }
+
         EVERY_N_SECONDS( 30 ) {
             if (gHeart) {
                 Heartrest(&floodlights[0]);
@@ -119,15 +136,7 @@ void loop()
             }
             gShowFloodlights = true;
         }
-        for (int floodlight=START_FLOODLIGHT; floodlight<END_FLOODLIGHT; floodlight++) {
-            floodlights[floodlight].currentCommand = commandTable.FLCommand[effect];
-            if (LOCAL) {
-                floodlights[floodlight].writeCommand();
-            } else if (SERVER_CLIENT) {
-                SendFloodlightCommand(&floodlights[floodlight]);
-            }
-            delay(DELAY_INBETWEEN_FLOODLIGHTS);
-        }
+
         delay(DELAY_INBETWEEN_COMMANDS);
     }
 }
