@@ -1,5 +1,4 @@
 #!/bin/bash
-SCRIPTPATH="${BASH_SOURCE%/*}"
 cd libraries
 [ -d ${HOME}/Arduino/libraries ] &&
 /bin/ls | while read folders; do
