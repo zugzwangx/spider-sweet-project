@@ -2,10 +2,12 @@
 #include <vector>
 #include <Floodlight.h>
 
-// Test for sending floodlight commands to remove server
-#define LOCAL 1
 // Or test locally on Server and execute commands
+#define LOCAL 1
+// Test for sending floodlight commands to remove server
 #define SERVER_CLIENT 0
+// Test for UART
+#define UART 0
 
 // Floodlight control
 #define NUM_COMMANDS 24
@@ -43,11 +45,12 @@ void NextPattern();
 FloodlightCommand commandTable;
 
 std::vector<Floodlight> floodlights;
-
+void SendFloodlightCommand(uint8_t, uint8_t);
 
 bool gHeart = false;
 bool gShowFloodlights = true;
 //
+
 void setup()
 {
 	pinMode(PIN_A13, OUTPUT);
@@ -55,7 +58,7 @@ void setup()
     //
     pinMode(TEENSY_LED, OUTPUT);
     // Open serial communications and wait for port to open:
-    Serial5.begin(38400);
+    Serial5.begin(38400, SERIAL_8N1);
     // flooodlights
     floodlights = {
         { FLOODLIGHT_PIN1, commandTable.FLCommand[0] },
@@ -70,20 +73,24 @@ void setup()
     for (int i=0; i<NUM_FLOODLIGHTS; i++) {
         floodlights[i].writeCommand(); // power off
     }
+
 }
 
 void loop()
 {
-    int byte;
-
+    uint8_t byte = 0;
     uint8_t cmdTableIndex, cmdPin;
 
     /*
      * Outer Loop to test each command
      */
-    for (uint8_t effect = START_COMMAND; effect < END_COMMAND; effect++) {
 
-        if (LOCAL) {
+    for (uint8_t effect = 0; effect < NUM_FLOODLIGHTS; effect++) {
+
+        /* Just comment out the Client if running Server, and 
+         * vice versa
+         */
+        if (UART) {
             // Testing Floodlight Server
             while (Serial5.available()) {
                 byte = Serial5.read();
@@ -102,7 +109,9 @@ void loop()
             // Testing Floodlight Server
             while (Serial5.available()) {
                 byte = Serial5.read();
+                // Bits 0-4 represent the indexes for the command_table
                 cmdTableIndex |= byte & 0x1F;
+                // Bits 5-7 represent the indexes for the floodlights
                 cmdPin |= (byte >> 5) & 0x03;
                 if ((cmdTableIndex < 32) && (cmdPin < 8)) {
                     floodlights[cmdPin].currentCommand = commandTable.FLCommand[cmdTableIndex];
@@ -115,13 +124,14 @@ void loop()
         
         /*
          * Inner Loop to test each floodlight
+         * If LOCAL on the Floodlight teensy, each 
          */
         for (int floodlight=START_FLOODLIGHT; floodlight<END_FLOODLIGHT; floodlight++) {
             floodlights[floodlight].currentCommand = commandTable.FLCommand[effect];
             if (LOCAL) {
                 floodlights[floodlight].writeCommand();
-            } else if (SERVER_CLIENT) {
-                SendFloodlightCommand(&floodlights[floodlight]);
+            } else if (SERVER_CLIENT) { 
+                SendFloodlightCommand(floodlights[floodlight].pin, effect);
             }
             delay(DELAY_INBETWEEN_FLOODLIGHTS);
         }
@@ -139,46 +149,4 @@ void loop()
 
         delay(DELAY_INBETWEEN_COMMANDS);
     }
-}
-
-void SendFloodlightCommand(Floodlight *floodlight) {
-    int byte;
-    if (Serial5.availableForWrite()) {
-        byte |= (5 << floodlight->pin) & 0xE0;
-        byte |= floodlight->currentCommand & 0x1F;
-        Serial5.write(byte);
-        Blink();
-    }
-}
-void TestFloodlights(Floodlight *floodlights, int numFloodlights, uint32_t command) {
-    for (int i=0; i<numFloodlights; i++) {
-        floodlights[i].currentCommand = command;
-    }
-}
-
-void ShowFloodlights(Floodlight *Floodlights, int numFloodlights) {
-    for (int i=0; i<numFloodlights; i++) {
-        floodlights[i].writeCommand();
-    }
-}
-
-void Heartbeat(Floodlight *floodlight) {
-    floodlight->currentCommand = LIGHT_R;
-    floodlight->writeCommand(); // red
-    floodlight->currentCommand = LIGHT_STROBE;
-    floodlight->writeCommand(); // strobe
-}
-
-void Heartrest(Floodlight *floodlight) {
-    floodlight->currentCommand = LIGHT_R;
-    floodlight->writeCommand(); // red
-    floodlight->currentCommand = LIGHT_SMOOTHE;
-    floodlight->writeCommand(); // strobe
-}
-
-void Blink() {
-    digitalWrite(TEENSY_LED, HIGH);
-    delay(1000);
-    digitalWrite(TEENSY_LED, LOW);
-    delay(1000);
 }

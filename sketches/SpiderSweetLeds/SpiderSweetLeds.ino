@@ -139,7 +139,6 @@ void Juggle(CRGB *, int);
 void Fire(CRGB *, int);
 void Disco(CRGB *leds, int numLeds);
 
-
 CRGB leds[NUM_LEDS_PER_STRIP*NUM_STRIPS];
 // represents legs in clock position facing underneath spider
 CRGB* ledStrips[] = {
@@ -178,7 +177,7 @@ uint8_t gPalette = 0; // Index number for current palette
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
 uint8_t gReverseDirection = false;
-
+//
 void setup()
 {
 	pinMode(PIN_A13, OUTPUT);
@@ -191,26 +190,25 @@ void setup()
     for (int i=0; i<NUM_FLOODLIGHTS; i++) {
         (&floodlights[i]); // power on
     }
-
 }
 
 void loop()
 {
-    
-    for (int effect = 0; effect < NUM_EFFECTS; effect++) {
+
+    for (uint8_t effect = 0; effect < NUM_EFFECTS; effect++) {
         if (effect < NUM_PATTERNS) {
             // Demo
             // Call the current pattern function once, updating the 'leds' array
             for( int i = 0; i < NUM_STRIPS; i++) {
                 // gPatterns[i](startLeds[i], numLedsPerStrip[i]);
-                if (i == 0) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 1) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 2) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 3) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 4) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 5) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 6) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 7) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
+                if (i == 0) {gPatterns[i](ledStrips[i], numLedsPerStrip[i]);} 
+                else if (i == 1) {gPatterns[gCurrentPatternNumber](ledStrips[i], numLedsPerStrip[i]);}
+                else if (i == 2) {gPatterns[gCurrentPatternNumber](ledStrips[i], numLedsPerStrip[i]);}
+                else if (i == 3) {gPatterns[gCurrentPatternNumber](ledStrips[i], numLedsPerStrip[i]);}
+                else if (i == 4) {gPatterns[gCurrentPatternNumber](ledStrips[i], numLedsPerStrip[i]);}
+                else if (i == 5) {gPatterns[gCurrentPatternNumber](ledStrips[i], numLedsPerStrip[i]);}
+                else if (i == 6) {gPatterns[gCurrentPatternNumber](ledStrips[i], numLedsPerStrip[i]);}
+                else if (i == 7) {gPatterns[gCurrentPatternNumber](ledStrips[i], numLedsPerStrip[i]);}
             }
             LEDS.show();
             // LEDS.delay(10);
@@ -221,7 +219,7 @@ void loop()
         } else {
             // ColorPalette
             // ChangePalettePeriodically(gPalette);
-            EVERY_N_SECONDS( 10 ) { ChangePalettePeriodically(gPalette); } // change patterns periodically
+            EVERY_N_SECONDS( 30 ) { ChangePalettePeriodically(gPalette); } // change patterns periodically
 
             static uint8_t startIndex = 0;
             startIndex = startIndex + 1; /* motion speed */
@@ -239,7 +237,7 @@ void loop()
         }
         EVERY_N_SECONDS( 30 ) {
             for (int floodlight=1; floodlight<NUM_FLOODLIGHTS; floodlight++) {
-                if ((effect > 2) && (effect < 24)) {
+                if ((effect > 2) && (effect < 21)) {
                     floodlights[floodlight].currentCommand = commandTable.FLCommand[effect];
                    
                     floodlights[floodlight].writeCommand();
@@ -277,20 +275,20 @@ void FillLEDsFromPaletteColors(CRGB *leds, int numLeds, uint8_t colorIndex)
 void ChangePalettePeriodically(uint8_t palette)
 {
     switch(palette) {
-        case 8: currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; break;
-        case 9: currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;  break;
-        case 10: currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; break;
-        case 11: SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND; break;
-        case 12: SetupTotallyRandomPalette();              currentBlending = LINEARBLEND; break;
-        case 13: SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; break;
-        case 14: SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; break;
-        case 15: currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; break;
-        case 16: currentPalette = PartyColors_p;           currentBlending = LINEARBLEND; break;
-        case 17: currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;  break;
-        case 18: currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND; break;
-        case 19: currentPalette = OceanColors_p; currentBlending = LINEARBLEND; break;
-        case 20: currentPalette = LavaColors_p; currentBlending = LINEARBLEND; break;
-        case 21: currentPalette = ForestColors_p; currentBlending = LINEARBLEND; break;
+        case  0: currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; break;
+        case 1: currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;  break;
+        case 2: currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; break;
+        case 3: SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND; break;
+        case 4: SetupTotallyRandomPalette();              currentBlending = LINEARBLEND; break;
+        case 5: SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; break;
+        case 6: SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; break;
+        case 7: currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; break;
+        case 8: currentPalette = PartyColors_p;           currentBlending = LINEARBLEND; break;
+        case 9: currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;  break;
+        case 10: currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND; break;
+        case 11: currentPalette = OceanColors_p; currentBlending = LINEARBLEND; break;
+        case 12: currentPalette = LavaColors_p; currentBlending = LINEARBLEND; break;
+        case 13: currentPalette = ForestColors_p; currentBlending = LINEARBLEND; break;
     }
 }
 
