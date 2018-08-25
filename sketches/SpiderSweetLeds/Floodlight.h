@@ -1,7 +1,6 @@
 #ifndef FLOODLIGHT_H
 #define FLOODLIGHT_H
 
-#include <Arduino.h>
 #include <stdint.h>
 #include <vector>
 
@@ -38,27 +37,29 @@
 #define LIGHT_SMOOTHE 0x00F7E817
 // For Blink
 #define TEENSY_LED 13
+#define NUM_FLOODLIGHTS 6
 
 struct Floodlight;
+
 void SendFloodlightCommand(uint8_t, uint8_t);
 void TestFloodlights(std::vector<Floodlight>*, uint32_t);
 void ShowFloodlights(std::vector<Floodlight>*);
 void Heartbeat(Floodlight*);
 void Heartrest(Floodlight*);
 void Blink();
-void write_command(uint8_t, uint32_t);
-void output_bit(uint8_t, int);
 
 typedef struct FloodlightCommand {
     static const uint32_t *FLCommand;
 }FloodlightCommand;
-
 
 typedef struct Floodlight {
     uint8_t pin;
     uint32_t currentCommand;
     void writeCommand();
 }Floodlight;
+
+void output_bit(uint8_t, int);
+void write_command(uint8_t, uint32_t);
 
 /*
 const int cmd_array_len = ELEMENTS(command_table);

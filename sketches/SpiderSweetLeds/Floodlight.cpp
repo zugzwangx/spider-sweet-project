@@ -1,8 +1,10 @@
-#include "Floodlight.h"
+#include <Arduino.h>
 #include <vector>
+#include <iterator>
+#include <Floodlight.h>
 
 
-class FLCommandTable;
+struct FLCommandTable;
 struct Floodlight;
 
 static const uint32_t command_table[] = {LIGHT_OFF, LIGHT_ON, LIGHT_R, LIGHT_G, LIGHT_B, LIGHT_W, LIGHT_UP, LIGHT_DN,
@@ -13,7 +15,7 @@ static const uint32_t command_table[] = {LIGHT_OFF, LIGHT_ON, LIGHT_R, LIGHT_G, 
 const uint32_t *FloodlightCommand::FLCommand = command_table;
 
 void Floodlight::writeCommand() {
-    write_command(this->pin, this->currentCommand);
+    write_command(Floodlight::pin, Floodlight::currentCommand);
 }
 
 void SendFloodlightCommand(uint8_t cmdPin, uint8_t cmdTableIndex) {
@@ -22,19 +24,18 @@ void SendFloodlightCommand(uint8_t cmdPin, uint8_t cmdTableIndex) {
         byte |= (5 << cmdPin) & 0xE0;
         byte |= cmdTableIndex & 0x1F;
         Serial5.write(byte);
-        Blink();
     }
 }
 
-void TestFloodlights(std::vector<Floodlight> *floodlights, uint32_t command) {
-    for (std::vector<Floodlight>::iterator it = floodlights->begin(); it != floodlights->end(); ++it) {
-        it->currentCommand = command;
+void TestFloodlights(std::vector<Floodlight*> floodlights, uint32_t command) {
+    for (int i=0; i<NUM_FLOODLIGHTS; i++) {
+        floodlights[i]->currentCommand = command;
     }
 }
 
-void ShowFloodlights(std::vector<Floodlight> *floodlights) {
-    for (std::vector<Floodlight>::iterator it = floodlights->begin(); it != floodlights->end(); ++it) {
-        it->writeCommand();
+void ShowFloodlights(std::vector<Floodlight*> floodlights) {
+    for (int i=0; i<NUM_FLOODLIGHTS; i++) {
+        floodlights[i]->writeCommand();
     }
 }
 
@@ -95,4 +96,6 @@ void output_bit(uint8_t pin, int n)
  }
 }
 
+/*
 
+*/
