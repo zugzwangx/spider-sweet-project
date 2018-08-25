@@ -97,7 +97,7 @@
 #define STRIP_SIX_PIN J_THREE_PIN
 #define STRIP_SEVEN_PIN J_FIVE_PIN
 #define STRIP_EIGHT_PIN J_SEVEN_PIN
-// #define BRIGHTNESS  200
+
 #define BRIGHTNESS  64
 #define FRAMES_PER_SECOND 60
 #define COOLING  55
@@ -221,7 +221,7 @@ void loop()
         } else {
             // ColorPalette
             // ChangePalettePeriodically(gPalette);
-            EVERY_N_SECONDS( 10 ) { ChangePalettePeriodically(gPalette); } // change patterns periodically
+            EVERY_N_SECONDS( 10 ) { ChangePalettePeriodically(effect); } // change patterns periodically
 
             static uint8_t startIndex = 0;
             startIndex = startIndex + 1; /* motion speed */
@@ -258,7 +258,7 @@ void Disco(CRGB *leds, int numLeds) {
 
 void FillLEDsFromPaletteColors(CRGB *leds, int numLeds, uint8_t colorIndex)
 {
-    uint8_t brightness = 255;
+    uint8_t brightness = BRIGHTNESS;
 
     for( int j = 0; j < numLeds; j++) {
         leds[j] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
