@@ -2,8 +2,6 @@
 #include <vector>
 #include <Floodlight.h>
 
-// Or test locally on Server and execute commands
-#define LOCAL 1
 // Test for sending floodlight commands to remove server
 #define SERVER_CLIENT 0
 // Test for UART
@@ -36,10 +34,6 @@
 #define FLOODLIGHT_PIN8 6
 
 #define TEENSY_LED 13
-
-//struct Floodlight;
-//struct FloodlightCommand;
-//void SendFloodlightCommand(uint8_t, uint8_t);
 
 FloodlightCommand commandTable;
 
@@ -85,55 +79,54 @@ void loop()
 
     for (uint8_t effect = 0; effect < NUM_FLOODLIGHTS; effect++) {
 
+#ifdef UART
         /* Just comment out the Client if running Server, and 
          * vice versa
          */
-        if (UART) {
-            // Testing Floodlight Server
-            while (Serial5.available()) {
-                byte = Serial5.read();
+        // Testing Floodlight Server
+        while (Serial5.available()) {
+            byte = Serial5.read();
 
-            }
-            // Testing Floodlight Client
-            if (Serial5.availableForWrite()) {
-                byte = 5;
-                
-                Serial5.write(byte);
-                //Blink();
-            }
+        }
+        // Testing Floodlight Client
+        if (Serial5.availableForWrite()) {
+            byte = 5;
+            
+            Serial5.write(byte);
+            //Blink();
         }
 
-        if (SERVER_CLIENT ) {
-            // Testing Floodlight Server
-            while (Serial5.available()) {
-                byte = Serial5.read();
-                // Bits 0-4 represent the indexes for the command_table
-                cmdTableIndex |= byte & 0x1F;
-                // Bits 5-7 represent the indexes for the floodlights
-                cmdPin |= (byte >> 5) & 0x03;
-                if ((cmdTableIndex < 32) && (cmdPin < 8)) {
-                    floodlights[cmdPin].currentCommand = commandTable.FLCommand[cmdTableIndex];
-                    floodlights[cmdPin].writeCommand();
-                }
-                // Blink();
-                delay(10000);
+#elif defined SERVER_CLIENT  
+        /*
+         * Run as Floodlight Server, receiving UART commands from the
+         * Floodlight Client
+         */
+        while (Serial5.available()) {
+            byte = Serial5.read();
+            // Bits 0-4 represent the indexes for the command_table
+            cmdTableIndex |= byte & 0x1F;
+            // Bits 5-7 represent the indexes for the floodlights
+            cmdPin |= (byte >> 5) & 0x03;
+            if ((cmdTableIndex < 32) && (cmdPin < 8)) {
+                floodlights[cmdPin].currentCommand = commandTable.FLCommand[cmdTableIndex];
+                floodlights[cmdPin].writeCommand();
             }
+            Blink();
+            delay(10000);
         }
         
+#else
         /*
          * Inner Loop to test each floodlight
-         * If LOCAL on the Floodlight teensy, each 
+         *  
          */
         for (int floodlight=START_FLOODLIGHT; floodlight<END_FLOODLIGHT; floodlight++) {
             floodlights[floodlight].currentCommand = commandTable.FLCommand[effect];
-            if (LOCAL) {
-                floodlights[floodlight].writeCommand();
-            } else if (SERVER_CLIENT) { 
-                SendFloodlightCommand(floodlights[floodlight].pin, effect);
-            }
+            floodlights[floodlight].writeCommand();
+
             delay(DELAY_INBETWEEN_FLOODLIGHTS);
         }
-
+#endif
         EVERY_N_SECONDS( 30 ) {
             if (gHeart) {
                 Heartrest(&floodlights[0]);

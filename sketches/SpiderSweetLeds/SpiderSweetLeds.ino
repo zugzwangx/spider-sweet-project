@@ -1,6 +1,11 @@
 #include <FastLED.h>
 #include <vector>
 #include <Floodlight.h>
+#include <iostream>     // std::cout
+#include <algorithm>    // std::random_shuffle
+#include <vector>       // std::vector
+#include <ctime>        // std::time
+#include <cstdlib>      // std::rand, std::srand
 
 // #define MINIME
 // #define REPEATER
@@ -179,6 +184,8 @@ uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
 uint8_t gReverseDirection = false;
 
+std::vector<int> numEffects;
+
 void setup()
 {
 	pinMode(PIN_A13, OUTPUT);
@@ -191,26 +198,42 @@ void setup()
     for (int i=0; i<NUM_FLOODLIGHTS; i++) {
         (&floodlights[i]); // power on
     }
+    
+    // random generator function:
+    // int myrandom (int i) { return std::rand()%i;}
+
+    // std::srand ( unsigned ( std::time(0) ) );
+
+    // set values:
+    for (int i=0; i<NUM_EFFECTS; ++i) numEffects.push_back(i); // 1 2 3 4 5 6 7 8 9
+
+
 
 }
 
 void loop()
 {
+    // using built-in random generator:
+    std::random_shuffle ( numEffects.begin(), numEffects.end() );
+
+    // using myrandom:
+    // std::random_shuffle ( numEffects.begin(), numEffects.end(), myrandom);
     
-    for (int effect = 0; effect < NUM_EFFECTS; effect++) {
-        if (effect < NUM_PATTERNS) {
+    // for (int effect = 0; effect < NUM_EFFECTS; effect++) {
+    for (std::vector<int>::iterator effect=numEffects.begin(); effect!=numEffects.end(); ++effect) {
+        if (*effect < NUM_PATTERNS) {
             // Demo
             // Call the current pattern function once, updating the 'leds' array
             for( int i = 0; i < NUM_STRIPS; i++) {
                 // gPatterns[i](startLeds[i], numLedsPerStrip[i]);
-                if (i == 0) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 1) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 2) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 3) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 4) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 5) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 6) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
-                else if (i == 7) {gPatterns[gCurrentPatternNumber](ledStrips[i],NUM_LEDS_PER_STRIP);}
+                if (i == 0) {gPatterns[*effect](ledStrips[i],NUM_LEDS_PER_STRIP);}
+                else if (i == 1) {gPatterns[*effect](ledStrips[i],NUM_LEDS_PER_STRIP);}
+                else if (i == 2) {gPatterns[*effect](ledStrips[i],NUM_LEDS_PER_STRIP);}
+                else if (i == 3) {gPatterns[*effect](ledStrips[i],NUM_LEDS_PER_STRIP);}
+                else if (i == 4) {gPatterns[*effect](ledStrips[i],NUM_LEDS_PER_STRIP);}
+                else if (i == 5) {gPatterns[*effect](ledStrips[i],NUM_LEDS_PER_STRIP);}
+                else if (i == 6) {gPatterns[*effect](ledStrips[i],NUM_LEDS_PER_STRIP);}
+                else if (i == 7) {gPatterns[*effect](ledStrips[i],NUM_LEDS_PER_STRIP);}
             }
             LEDS.show();
             // LEDS.delay(10);
@@ -221,7 +244,7 @@ void loop()
         } else {
             // ColorPalette
             // ChangePalettePeriodically(gPalette);
-            EVERY_N_SECONDS( 10 ) { ChangePalettePeriodically(effect); } // change patterns periodically
+            EVERY_N_SECONDS( 10 ) { ChangePalettePeriodically(*effect); } // change patterns periodically
 
             static uint8_t startIndex = 0;
             startIndex = startIndex + 1; /* motion speed */
@@ -237,15 +260,20 @@ void loop()
             // LEDS.delay(10);
             LEDS.delay(1000 / UPDATES_PER_SECOND);
         }
+#ifdef SERVER_CLIENT
         EVERY_N_SECONDS( 30 ) {
+            /*
+             * Run as Floodlight Client, sending UART commands to the
+             * Floodlight Server 
+             */
             for (int floodlight=1; floodlight<NUM_FLOODLIGHTS; floodlight++) {
-                if ((effect > 2) && (effect < 24)) {
-                    floodlights[floodlight].currentCommand = commandTable.FLCommand[effect];
-                   
-                    floodlights[floodlight].writeCommand();
+                if ((*effect > 2) && (*effect < 24)) {
+                    floodlights[floodlight].currentCommand = commandTable.FLCommand[*effect];
+                    SendFloodlightCommand(floodlights[floodlight].pin, *effect);
                 }
             }
         }
+#endif
     }
 }
 

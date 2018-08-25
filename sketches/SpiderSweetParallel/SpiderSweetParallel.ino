@@ -7,8 +7,6 @@
 #include <ctime>        // std::time
 #include <cstdlib>      // std::rand, std::srand
 
-
-
 // #define MINIME
 // #define REPEATER
 
@@ -262,15 +260,20 @@ void loop()
             // LEDS.delay(10);
             LEDS.delay(1000 / UPDATES_PER_SECOND);
         }
+#ifdef SERVER_CLIENT
         EVERY_N_SECONDS( 30 ) {
+            /*
+             * Run as Floodlight Client, sending UART commands to the
+             * Floodlight Server 
+             */
             for (int floodlight=1; floodlight<NUM_FLOODLIGHTS; floodlight++) {
                 if ((*effect > 2) && (*effect < 24)) {
                     floodlights[floodlight].currentCommand = commandTable.FLCommand[*effect];
-                   
-                    floodlights[floodlight].writeCommand();
+                    SendFloodlightCommand(floodlights[floodlight].pin, *effect);
                 }
             }
         }
+#endif
     }
 }
 
