@@ -41,8 +41,6 @@
 //struct FloodlightCommand;
 //void SendFloodlightCommand(uint8_t, uint8_t);
 
-void NextPattern();
-
 FloodlightCommand commandTable;
 
 std::vector<Floodlight> floodlights;
@@ -101,7 +99,7 @@ void loop()
                 byte = 5;
                 
                 Serial5.write(byte);
-                Blink();
+                //Blink();
             }
         }
 
@@ -117,7 +115,7 @@ void loop()
                     floodlights[cmdPin].currentCommand = commandTable.FLCommand[cmdTableIndex];
                     floodlights[cmdPin].writeCommand();
                 }
-                Blink();
+                // Blink();
                 delay(10000);
             }
         }
@@ -150,3 +148,5 @@ void loop()
         delay(DELAY_INBETWEEN_COMMANDS);
     }
 }
+
+
