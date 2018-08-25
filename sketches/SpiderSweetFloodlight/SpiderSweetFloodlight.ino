@@ -37,15 +37,15 @@
 
 #define TEENSY_LED 13
 
-struct Floodlight;
-struct FloodlightCommand;
+//struct Floodlight;
+//struct FloodlightCommand;
+//void SendFloodlightCommand(uint8_t, uint8_t);
 
 void NextPattern();
 
 FloodlightCommand commandTable;
 
 std::vector<Floodlight> floodlights;
-void SendFloodlightCommand(uint8_t, uint8_t);
 
 bool gHeart = false;
 bool gShowFloodlights = true;
