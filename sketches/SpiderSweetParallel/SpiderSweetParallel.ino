@@ -6,6 +6,7 @@
 #include <ctime>        // std::time
 #include <cstdlib>      // std::rand, std::srand
 #include "Floodlight.h"
+#include "LedStrip.h"
 
 // #define MINIME
 // #define REPEATER
@@ -144,6 +145,10 @@ void Juggle(CRGB *, int);
 void Fire(CRGB *, int);
 void Disco(CRGB *leds, int numLeds);
 
+uint32_t command_table[] = {LIGHT_OFF, LIGHT_ON, LIGHT_R, LIGHT_G, LIGHT_B, LIGHT_W, LIGHT_UP, LIGHT_DN,
+                        LIGHT_R2, LIGHT_R3, LIGHT_R4, LIGHT_G2, LIGHT_G3, LIGHT_G4, LIGHT_G5,
+                        LIGHT_B2, LIGHT_B3, LIGHT_B4, LIGHT_B5, LIGHT_FLASH, LIGHT_STROBE, LIGHT_FADE,
+                        LIGHT_SMOOTHE};
 
 CRGB leds[NUM_LEDS_PER_STRIP*NUM_STRIPS];
 // represents legs in clock position facing underneath spider
@@ -160,14 +165,6 @@ CRGB* ledStrips[] = {
 
 FloodlightCommand commandTable;
 
-std::vector<Floodlight> floodlights = {
-    { FLOODLIGHT_PIN1, commandTable.FLCommand[1] },
-    { FLOODLIGHT_PIN2, commandTable.FLCommand[1] },
-    { FLOODLIGHT_PIN3, commandTable.FLCommand[1] },
-    { FLOODLIGHT_PIN4, commandTable.FLCommand[1] },
-    { FLOODLIGHT_PIN5, commandTable.FLCommand[1] },
-    { FLOODLIGHT_PIN6, commandTable.FLCommand[1] }
-};
 
 #ifdef MINIME
 int numLedsPerStrip[8] = { 21, 14, 9, 16, 16, 9, 14, 21 };
@@ -194,6 +191,14 @@ void setup()
 
     currentPalette = RainbowColors_p;
     currentBlending = LINEARBLEND;
+    std::vector<Floodlight> floodlights = {
+            { FLOODLIGHT_PIN1, command_table[0] },
+            { FLOODLIGHT_PIN2, command_table[0] },
+            { FLOODLIGHT_PIN3, command_table[0] },
+            { FLOODLIGHT_PIN4, command_table[0] },
+            { FLOODLIGHT_PIN5, command_table[0] },
+            { FLOODLIGHT_PIN6, command_table[0] }
+    };
     // flooodlights
     for (int i=0; i<NUM_FLOODLIGHTS; i++) {
         (&floodlights[i]); // power on
@@ -268,7 +273,7 @@ void loop()
              */
             for (int floodlight=1; floodlight<NUM_FLOODLIGHTS; floodlight++) {
                 if ((*effect > 2) && (*effect < 24)) {
-                    floodlights[floodlight].currentCommand = commandTable.FLCommand[*effect];
+                    floodlights[floodlight].currentCommand = command_table[*effect];
                     SendFloodlightCommand(floodlights[floodlight].pin, *effect);
                 }
             }

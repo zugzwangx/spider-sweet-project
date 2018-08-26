@@ -35,7 +35,7 @@
 
 #define TEENSY_LED 13
 
-FloodlightCommand commandTable;
+// FloodlightCommand commandTable;
 
 std::vector<Floodlight> floodlights;
 
@@ -43,6 +43,10 @@ bool gHeart = false;
 bool gShowFloodlights = true;
 //
 
+uint32_t command_table[] = {LIGHT_OFF, LIGHT_ON, LIGHT_R, LIGHT_G, LIGHT_B, LIGHT_W, LIGHT_UP, LIGHT_DN,
+                        LIGHT_R2, LIGHT_R3, LIGHT_R4, LIGHT_G2, LIGHT_G3, LIGHT_G4, LIGHT_G5,
+                        LIGHT_B2, LIGHT_B3, LIGHT_B4, LIGHT_B5, LIGHT_FLASH, LIGHT_STROBE, LIGHT_FADE,
+                        LIGHT_SMOOTHE};
 void setup()
 {
 	pinMode(PIN_A13, OUTPUT);
@@ -53,12 +57,12 @@ void setup()
     Serial5.begin(38400, SERIAL_8N1);
     // flooodlights
     floodlights = {
-        { FLOODLIGHT_PIN1, commandTable.FLCommand[0] },
-        { FLOODLIGHT_PIN2, commandTable.FLCommand[0] },
-        { FLOODLIGHT_PIN3, commandTable.FLCommand[0] },
-        { FLOODLIGHT_PIN4, commandTable.FLCommand[0] },
-        { FLOODLIGHT_PIN5, commandTable.FLCommand[0] },
-        { FLOODLIGHT_PIN6, commandTable.FLCommand[0] }
+        { FLOODLIGHT_PIN1, command_table[0] },
+        { FLOODLIGHT_PIN2, command_table[0] },
+        { FLOODLIGHT_PIN3, command_table[0] },
+        { FLOODLIGHT_PIN4, command_table[0] },
+        { FLOODLIGHT_PIN5, command_table[0] },
+        { FLOODLIGHT_PIN6, command_table[0] }
     };
 
 
@@ -70,63 +74,67 @@ void setup()
 
 void loop()
 {
-    uint8_t byte = 0;
-    uint8_t cmdTableIndex, cmdPin;
 
+#ifdef SERVER_CLIENT
+    uint8_t byte = 0, cmdTableIndex, cmdPin;
+    uint32_t command;
+
+    /*
+     * Run as Floodlight Server, receiving UART commands from the
+     * Floodlight Client
+     */
+    while (Serial5.available()) {
+        byte = Serial5.read();
+        // Bits 0-4 represent the indexes for the command_table
+        cmdTableIndex |= byte & 0x1F;
+        // Bits 5-7 represent the indexes for the floodlights
+        cmdPin |= (byte >> 5) & 0x03;
+        if ((cmdTableIndex < 32) && (cmdPin < 8)) {
+            floodlights[cmdPin].currentCommand = command_table[cmdTableIndex];
+            floodlights[cmdPin].writeCommand();
+        }
+        Blink();
+        delay(10000);
+    }
+        
+#elif defined UART
+    uint8_t byte = 0;
+
+    /* Just comment out the Client if running Server, and 
+     * vice versa
+     */
+    // Testing Floodlight Server
+    while (Serial5.available()) {
+        byte = Serial5.read();
+
+    }
+    // Testing Floodlight Client
+    if (Serial5.availableForWrite()) {
+        byte = 5;
+        
+        Serial5.write(byte);
+        //Blink();
+    }
+#else
     /*
      * Outer Loop to test each command
      */
 
     for (uint8_t effect = 0; effect < NUM_FLOODLIGHTS; effect++) {
 
-#ifdef UART
-        /* Just comment out the Client if running Server, and 
-         * vice versa
-         */
-        // Testing Floodlight Server
-        while (Serial5.available()) {
-            byte = Serial5.read();
-
-        }
-        // Testing Floodlight Client
-        if (Serial5.availableForWrite()) {
-            byte = 5;
-            
-            Serial5.write(byte);
-            //Blink();
-        }
-
-#elif defined SERVER_CLIENT  
-        /*
-         * Run as Floodlight Server, receiving UART commands from the
-         * Floodlight Client
-         */
-        while (Serial5.available()) {
-            byte = Serial5.read();
-            // Bits 0-4 represent the indexes for the command_table
-            cmdTableIndex |= byte & 0x1F;
-            // Bits 5-7 represent the indexes for the floodlights
-            cmdPin |= (byte >> 5) & 0x03;
-            if ((cmdTableIndex < 32) && (cmdPin < 8)) {
-                floodlights[cmdPin].currentCommand = commandTable.FLCommand[cmdTableIndex];
-                floodlights[cmdPin].writeCommand();
-            }
-            Blink();
-            delay(10000);
-        }
-        
-#else
         /*
          * Inner Loop to test each floodlight
          *  
-         */
         for (int floodlight=START_FLOODLIGHT; floodlight<END_FLOODLIGHT; floodlight++) {
             floodlights[floodlight].currentCommand = commandTable.FLCommand[effect];
             floodlights[floodlight].writeCommand();
 
             delay(DELAY_INBETWEEN_FLOODLIGHTS);
         }
-#endif
+         */
+        command = command_table[effect];
+        TestFloodlights(floodlights, command);
+
         EVERY_N_SECONDS( 30 ) {
             if (gHeart) {
                 Heartrest(&floodlights[0]);
@@ -140,6 +148,7 @@ void loop()
 
         delay(DELAY_INBETWEEN_COMMANDS);
     }
+#endif
 }
 
 
