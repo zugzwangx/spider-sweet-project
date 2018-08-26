@@ -1,5 +1,6 @@
 #include "FastLED.h"
-#include <LedStrip.h>
+#include "LedStrip.h"
+#include "Floodlight.h"
 
 #define CHIPSET WS2811
 #define COLOR_ORDER GRB
